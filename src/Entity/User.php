@@ -2,23 +2,31 @@
 
 namespace App\Entity;
 
-use App\Repository\UserRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use App\Repository\UserRepository;
+use ApiPlatform\Metadata\ApiResource;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Mapping\ClassMetadata;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
+#[ApiResource()]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups('customer_read', 'invoices_read')]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
+    #[Groups('customer_read', 'invoices_read')]
     private ?string $email = null;
 
     /**
@@ -34,16 +42,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('customer_read', 'invoices_read')]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('customer_read', 'invoices_read')]
     private ?string $lastName = null;
 
     /**
      * @var Collection<int, Customer>
      */
     #[ORM\OneToMany(targetEntity: Customer::class, mappedBy: 'user')]
+    #[Groups('invoices_read')]
     private Collection $customers;
+
+    public static function loadValidatorMetadata(ClassMetadata $metadata): void
+    {
+        $metadata->addConstraint(new UniqueEntity(fields: 'email'));
+        $metadata->addPropertyConstraint('firstName', new Assert\NotBlank(message: 'test message firstName NotBlank'));
+        $metadata->addPropertyConstraint('firstName', new Assert\Length(min: 3, minMessage: "test message firstName"));
+        $metadata->addPropertyConstraint('lastName', new Assert\NotBlank(message: 'test message lastName NotBlank'));
+        $metadata->addPropertyConstraint('lastName', new Assert\Length(min: 3, minMessage: "test message lastName Length"));
+        $metadata->addPropertyConstraint('password', new Assert\NotBlank(message: 'test message password NotBlank'));
+        $metadata->addPropertyConstraint('email', new Assert\NotBlank(message: 'test message email NotBlank'));
+        $metadata->addPropertyConstraint('email', new Assert\Email(message: 'test message email Email'));
+    }
 
     public function __construct()
     {

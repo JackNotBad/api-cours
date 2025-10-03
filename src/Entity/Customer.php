@@ -2,39 +2,62 @@
 
 namespace App\Entity;
 
-use App\Repository\CustomerRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use App\Repository\CustomerRepository;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Mapping\ClassMetadata;
 
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
+#[ApiResource(
+    normalizationContext: ['groups' => ['customer_read', 'invoices_read']],
+)]
 class Customer
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['customer_read', 'invoices_read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['customer_read', 'invoices_read'])]
     private ?string $firstName = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $lastName = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['customer_read', 'invoices_read'])]
+    private ?string $lastName = null;
+ 
+    #[ORM\Column(length: 255)]
+    #[Groups(['customer_read', 'invoices_read'])]
     private ?string $email = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['customer_read', 'invoices_read'])]
     private ?string $company = null;
 
     /**
      * @var Collection<int, Invoice>
      */
+    
     #[ORM\OneToMany(targetEntity: Invoice::class, mappedBy: 'customer')]
     private Collection $invoices;
 
     #[ORM\ManyToOne(inversedBy: 'customers')]
     private ?User $user = null;
+
+    public static function loadValidatorMetadata(ClassMetadata $metadata): void
+    {
+        $metadata->addPropertyConstraint('firstName', new Assert\NotBlank(message: 'test message firstName'));
+        $metadata->addPropertyConstraint('firstName', new Assert\Length(min: 3, minMessage: "test min message firstName"));
+        $metadata->addPropertyConstraint('lastName', new Assert\NotBlank(message: 'test message lastName'));
+        $metadata->addPropertyConstraint('lastName', new Assert\Length(min: 3, minMessage: "test min message lastName"));
+        $metadata->addPropertyConstraint('email', new Assert\Email(message: 'test message email'));
+    }
 
     public function __construct()
     {
