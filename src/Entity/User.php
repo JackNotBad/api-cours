@@ -15,18 +15,19 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ApiResource()]
+#[ApiResource(
+    normalizationContext: ['groups' => ['users_read']],
+)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups('customer_read', 'invoices_read')]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
-    #[Groups('customer_read', 'invoices_read')]
+    #[Groups('customer_read', 'invoices_read', 'users_read')]
     private ?string $email = null;
 
     /**
@@ -42,11 +43,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups('customer_read', 'invoices_read')]
+    #[Groups('customer_read', 'invoices_read', 'users_read')]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups('customer_read', 'invoices_read')]
+    #[Groups('customer_read', 'invoices_read', 'users_read')]
     private ?string $lastName = null;
 
     /**
